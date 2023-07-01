@@ -2,6 +2,8 @@ import { Component } from "react";
 import "../App.css";
 import spaceshipImage from "./img/spaceship.png";
 import birdflyImage from "./img/bird-flying.gif";
+// import pauseImage from "./img/pause.png";
+// import resumeImage from "./img/resume.png";
 
 class GamePage extends Component {
   constructor(props) {
@@ -11,16 +13,48 @@ class GamePage extends Component {
       SpaceShipPositionY: 700,
       birdflyPositionX: 500,
       birdflyPositionY: 1,
+      timer: 0,
+      isPaused: false,
     };
   }
+
+  //waktu
+  startTimer = () => {
+    this.timerInterval = setInterval(() => {
+      this.setState((prevState) => ({
+        timer: prevState.timer + 1,
+      }));
+    }, 1000);
+  };
+
+  stopTimer = () => {
+    clearInterval(this.timerInterval);
+  };
+
+  handlePause = () => {
+    const { isPaused } = this.state;
+    this.setState({ isPaused: !isPaused });
+    if (!isPaused) {
+      this.stopbirdflyMovement();
+      this.stopTimer();
+    } else {
+      this.startbirdflyMovement();
+      this.startTimer();
+    }
+  };
 
   handleKeyDown = (event) => {
     const {
       SpaceShipPositionX,
       SpaceShipPositionY,
+      isPaused,
       // birdflyPositionX,
       // birdflyPositionY,
     } = this.state;
+
+    if (isPaused) {
+      return;
+    }
     let newSpaceShipPositionX = SpaceShipPositionX;
     let newSpaceShipPositionY = SpaceShipPositionY;
 
@@ -50,16 +84,29 @@ class GamePage extends Component {
   componentDidMount() {
     window.addEventListener("keydown", this.handleKeyDown);
     this.startbirdflyMovement();
+    this.startTimer();
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === " ") {
+        this.handlePause();
+      }
+    });
   }
 
   componentWillUnmount() {
     window.removeEventListener("keydown", this.handleKeyDown);
     this.stopbirdflyMovement();
+    this.stopTimer();
   }
 
   startbirdflyMovement = () => {
     this.bidflyInterval = setInterval(() => {
-      const { birdflyPositionY } = this.state;
+      const { birdflyPositionY, isPaused } = this.state;
+
+      if (isPaused) {
+        return; // Stop birdfly movement when paused
+      }
+
       const newbirdflyPositionY = birdflyPositionY + 5;
       const gameContainerHeigt = 800;
       const birdflyHeight = 100;
@@ -82,6 +129,8 @@ class GamePage extends Component {
       SpaceShipPositionY,
       birdflyPositionX,
       birdflyPositionY,
+      timer,
+      isPaused,
     } = this.state;
 
     return (
@@ -105,6 +154,11 @@ class GamePage extends Component {
             top: `${birdflyPositionY}px`,
           }}
         />
+
+        <div className="timer-container">Timer: {timer} seconds</div>
+        <button className="pause-button" onClick={this.handlePause}>
+          {isPaused ? "Resume" : "Pause"}
+        </button>
       </div>
     );
   }
